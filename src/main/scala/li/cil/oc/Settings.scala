@@ -47,6 +47,10 @@ class Settings(val config: Config) {
       (-1.0, -1.0)
   }
   val enableNanomachinePfx = config.getBoolean("client.enableNanomachinePfx")
+  val audioSampleRate: Int = config.getInt("client.audioSampleRate") max 8000 min 96000
+  val audioSamplePeriodSec: Float = 1f / audioSampleRate
+  val audioSamplePeriodMs: Float = 1000f / audioSampleRate
+  val audioBlockSize: Int = config.getInt("client.audioBlockSize") max 128 min 8192
   val transposerFluidTransferRate = config.getInt("misc.transposerFluidTransferRate")
 
   // ----------------------------------------------------------------------- //
