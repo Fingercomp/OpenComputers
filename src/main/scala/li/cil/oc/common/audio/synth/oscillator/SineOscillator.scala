@@ -35,12 +35,10 @@ class SineOscillator(sync: Oscillator.Sync) extends Oscillator {
   override def process(samples: Int): Unit = {
     oversampledOutput.clear()
 
-    for (i <- 0 until samples * 2) {
+    for (i <- 0 until samples) {
       oversampledOutput.put(nextSample())
-
-      if (i % 2 == 0) {
-        sync.update()
-      }
+      oversampledOutput.put(nextSample())
+      sync.update()
     }
 
     downsampler.process(oversampledOutput, output)

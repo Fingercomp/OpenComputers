@@ -523,6 +523,8 @@ class Settings(val config: Config) {
   val audioCardBufferLimit: Int = config.getInt("audio.bufferLimit") max 0 // 8 MiB (8 * 1024 * 1024)
   val audioCardSampleRate: Int = config.getInt("audio.sampleRate") min 48000 max 0 // 48000
   val audioCardFormat: Int = config.getInt("audio.format") // 1
+  val audioCardMaxWavetableSampleCount: Int = config.getInt("audio.maxWavetableSampleCount")
+  val audioCardMaxWavetableSize: Int = config.getInt("audio.maxWavetableSize")
 }
 
 object Settings {
