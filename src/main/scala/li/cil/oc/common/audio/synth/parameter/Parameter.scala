@@ -54,6 +54,14 @@ object Parameter {
       override def map(value: Float, low: Float, high: Float): Float = value * high + (1 - value) * low
     }
 
+    object Quadratic extends Curve {
+      override def map(value: Float, low: Float, high: Float): Float = {
+        val t = value * value
+
+        t * high + (1 - t) * low
+      }
+    }
+
     object Exponential extends Curve {
       override def map(value: Float, low: Float, high: Float): Float = low * math.pow(high / low, value).toFloat
     }

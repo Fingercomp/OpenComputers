@@ -6,7 +6,7 @@ import java.nio.FloatBuffer
 import java.util
 
 /** A 2× downsampler. Reduces the sample rate of input in half. */
-class Downsampler2x {
+class Downsampler2x extends Filter {
   // the buffer is twice as long as needed so that all input samples are contiguous.
   private val buffer = Array.fill(Taps * 2)(0f)
   private var idx = 0
