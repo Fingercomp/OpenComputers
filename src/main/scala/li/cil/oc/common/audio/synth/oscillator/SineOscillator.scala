@@ -5,7 +5,7 @@ import li.cil.oc.common.audio.synth.filter.Downsampler2x
 
 import java.nio.FloatBuffer
 
-class SineOscillator(sync: Oscillator.Sync) extends Oscillator {
+class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
   // follower phase, in [0; 1).
   private var phase = 0f
 
@@ -20,25 +20,32 @@ class SineOscillator(sync: Oscillator.Sync) extends Oscillator {
   private val oversampledOutput = FloatBuffer.allocate(Settings.get.audioBlockSize * 2)
   private val downsampler = new Downsampler2x
 
+  setFrequency(model.frequency)
+
   override def reset(): Unit = {
     phase = 0f
     syncPhase = 0f
     deltaSyncPhase = 0f
     downsampler.reset()
+    setFrequency(model.frequency)
   }
 
-  override def setFrequency(freq: Float): Unit = {
+  private def setFrequency(freq: Float): Unit = {
     // the formula is freq / sampleRate; divide by 2 since the sample rate we're working with is two times higher.
     deltaSyncPhase = freq * Settings.get.audioSamplePeriodSec * 0.5f
+  }
+
+  override def onFrequencyChanged(freq: Float): Unit = {
+    setFrequency(freq)
   }
 
   override def process(samples: Int): Unit = {
     oversampledOutput.clear()
 
-    for (i <- 0 until samples) {
+    for (_ <- 0 until samples) {
       oversampledOutput.put(nextSample())
       oversampledOutput.put(nextSample())
-      sync.update()
+      model.Sync.update()
     }
 
     downsampler.process(oversampledOutput, output)
@@ -49,9 +56,9 @@ class SineOscillator(sync: Oscillator.Sync) extends Oscillator {
 
     if (syncPhase >= 1f) {
       syncPhase -= 1f
-      phase = syncPhase * sync.value
+      phase = syncPhase * model.Sync.value
     } else {
-      phase += deltaSyncPhase * sync.value
+      phase += deltaSyncPhase * model.Sync.value
     }
 
     // TODO: replace with linear interpolation of tabulated sine.

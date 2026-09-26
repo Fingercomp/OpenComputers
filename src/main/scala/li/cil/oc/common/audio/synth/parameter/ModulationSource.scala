@@ -2,7 +2,7 @@ package li.cil.oc.common.audio.synth.parameter
 
 import li.cil.oc.Settings
 import li.cil.oc.common.audio.synth
-import li.cil.oc.common.audio.synth.ChannelBound
+import li.cil.oc.common.audio.synth.channel.Triggerable
 
 /** Provides a value between 0 and 1. */
 sealed trait ModulationSource {
@@ -12,11 +12,18 @@ sealed trait ModulationSource {
   /** Advances the source by one sample, returning the previous one. */
   def update(): Float
 
+  /** The parameter this source is currently bound to. */
+  protected var parameter: Option[Parameter] = None
+
   /** Called when this modulation source is bound to a parameter. */
-  def onBound(parameter: Parameter): Unit = {}
+  def onBound(parameter: Parameter): Unit = {
+    this.parameter = Some(parameter)
+  }
 
   /** Called when this modulation source is unbound from a parameter. */
-  def onUnbound(parameter: Parameter): Unit = {}
+  def onUnbound(parameter: Parameter): Unit = {
+    this.parameter = None
+  }
 }
 
 object ModulationSource {
@@ -31,7 +38,7 @@ object ModulationSource {
     releaseMs: Float,
     low: Float,
     high: Float,
-  ) extends ModulationSource with ChannelBound {
+  ) extends ModulationSource with Triggerable {
     private var state: Adsr.State = Adsr.State.Closed
     private var elapsedMs = 0f
     private var _value = 0f
@@ -113,24 +120,24 @@ object ModulationSource {
     override def onBound(parameter: Parameter): Unit = {
       super.onBound(parameter)
 
-      for (channel <- parameter.channel) {
+      for (channel <- parameter.boundChannel) {
         channel.bindListener(this)
       }
     }
 
     override def onUnbound(parameter: Parameter): Unit = {
-      super.onUnbound(parameter)
-
-      for (channel <- parameter.channel) {
+      for (channel <- parameter.boundChannel) {
         channel.unbindListener(this)
       }
+
+      super.onUnbound(parameter)
     }
   }
 
   private object Adsr {
     sealed trait State
 
-    object State {
+    private object State {
       case object Attack extends State
       case object Decay extends State
       case object Sustain extends State
@@ -158,15 +165,17 @@ object ModulationSource {
     override def onBound(parameter: Parameter): Unit = {
       super.onBound(parameter)
 
-      // TODO
-      ???
+      for (targetChannel <- parameter.boundChannel) {
+        modChannel.synth.addChannelSend(modChannel.id, targetChannel.id, this)
+      }
     }
 
     override def onUnbound(parameter: Parameter): Unit = {
-      super.onUnbound(parameter)
+      for (targetChannel <- parameter.boundChannel) {
+        modChannel.synth.removeChannelSend(modChannel.id, targetChannel.id, this)
+      }
 
-      // TODO
-      ???
+      super.onUnbound(parameter)
     }
   }
 }

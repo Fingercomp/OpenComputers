@@ -2,7 +2,7 @@ package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
 
-abstract class BlepOscillator(sync: Oscillator.Sync) extends Oscillator {
+abstract class BlepOscillator(model: OscillatorModel) extends Oscillator(model) {
   // follower phase, in [0; 1).
   protected var phase = 0f
 
@@ -16,21 +16,28 @@ abstract class BlepOscillator(sync: Oscillator.Sync) extends Oscillator {
   // added to the next sample; effectively a 1-sample delay.
   protected var delayedOut = 0f
 
+  setFrequency(model.frequency)
+
   override def reset(): Unit = {
     syncPhase = 0f
     deltaSyncPhase = 0f
     delayedOut = 0f
     resetFollower()
+    setFrequency(model.frequency)
   }
 
-  override def setFrequency(freq: Float): Unit = {
+  private def setFrequency(freq: Float): Unit = {
     deltaSyncPhase = freq * Settings.get.audioSamplePeriodSec
+  }
+
+  override def onFrequencyChanged(freq: Float): Unit = {
+    setFrequency(freq)
   }
 
   override def process(samples: Int): Unit = {
     for (_ <- 0 until samples) {
       output.put(nextSample())
-      sync.update()
+      model.Sync.update()
     }
   }
 
@@ -74,7 +81,7 @@ abstract class BlepOscillator(sync: Oscillator.Sync) extends Oscillator {
       return computeAliasedSample()
     }
 
-    val deltaPhase = deltaSyncPhase * sync.value
+    val deltaPhase = deltaSyncPhase * model.Sync.value
     syncPhase += deltaSyncPhase
 
     // if the leader finishes a cycle, it triggers an early follower reset.
@@ -129,7 +136,7 @@ object BlepOscillator {
   def blamp0(t: Float): Float = t * t * t * sixth
   def blamp1(t: Float): Float = -blamp0(1 - t)
 
-  class Square(sync: Oscillator.Sync) extends BlepOscillator(sync) {
+  class Square(model: OscillatorModel) extends BlepOscillator(model) {
     // 0 -> high, 1 -> low
     private var stage: Byte = 0
 
@@ -174,12 +181,7 @@ object BlepOscillator {
     override protected def computeAliasedSample(): Float = 1f - stage.toFloat
   }
 
-  class Sawtooth(sync: Oscillator.Sync) extends BlepOscillator(sync) {
-    override protected def resetFollower(): Unit = {
-      super.resetFollower()
-      phase = 0f
-    }
-
+  class Sawtooth(model: OscillatorModel) extends BlepOscillator(model) {
     override def processFollowerDiscontinuities(deltaPhase: Float): Float = {
       var out = 0f
 
@@ -196,7 +198,7 @@ object BlepOscillator {
     override protected def computeAliasedSample(): Float = phase
   }
 
-  class Triangle(sync: Oscillator.Sync) extends BlepOscillator(sync) {
+  class Triangle(model: OscillatorModel) extends BlepOscillator(model) {
     private var stage: Byte = 0
 
     override protected def resetFollower(): Unit = {

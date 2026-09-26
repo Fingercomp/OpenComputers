@@ -4,7 +4,7 @@ import li.cil.oc.Settings
 
 import java.nio.FloatBuffer
 
-trait SignalGenerator {
+trait SignalGenerator extends Resettable {
   final val output: FloatBuffer = FloatBuffer.allocate(Settings.get.audioBlockSize)
 
   /**
@@ -15,7 +15,4 @@ trait SignalGenerator {
    * The number of samples must not exceed `output.remaining()`.
    */
   def process(samples: Int): Unit
-
-  /** Resets the channel to its initial state. */
-  def reset(): Unit
 }

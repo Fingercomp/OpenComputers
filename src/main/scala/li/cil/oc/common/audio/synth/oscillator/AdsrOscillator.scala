@@ -1,12 +1,11 @@
 package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
-import li.cil.oc.common.audio.synth.channel.Channel
 import li.cil.oc.common.audio.synth.oscillator.AdsrOscillator.State
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
-class AdsrOscillator(channel: Channel) extends Oscillator {
-  private class TimeParameter extends Parameter(0, Some(channel)) {
+class AdsrOscillator(model: OscillatorModel) extends Oscillator(model) {
+  private class TimeParameter extends Parameter(0, Some(model.channel)) {
     override def low: Float = 0
 
     override def high: Float = 60000
@@ -14,7 +13,7 @@ class AdsrOscillator(channel: Channel) extends Oscillator {
 
   val Attack, Decay, Release = new TimeParameter
 
-  object Sustain extends Parameter(1, Some(channel)) {
+  object Sustain extends Parameter(1, Some(model.channel)) {
     override def low: Float = 0f
 
     override def high: Float = 1f
@@ -48,7 +47,7 @@ class AdsrOscillator(channel: Channel) extends Oscillator {
     setState(State.Release)
   }
 
-  override def setFrequency(freq: Float): Unit = {
+  override def onFrequencyChanged(freq: Float): Unit = {
     // ignore.
   }
 

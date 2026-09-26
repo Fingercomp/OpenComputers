@@ -1,6 +1,7 @@
 package li.cil.oc.common.audio.synth.parameter
 
-import li.cil.oc.common.audio.synth.channel.Channel
+import li.cil.oc.common.audio.synth.Resettable
+import li.cil.oc.common.audio.synth.channel.{Channel, ChannelBound}
 
 /**
  * A bounded float value controlled by a source.
@@ -8,7 +9,12 @@ import li.cil.oc.common.audio.synth.channel.Channel
  * @param initialSourceValue the initial value to be provided by the default constant modulation source
  * @param channel the channel this parameter is associated with, if any
  */
-abstract class Parameter(private val initialSourceValue: Float, val channel: Option[Channel]) {
+abstract class Parameter(
+  private val initialSourceValue: Float,
+  channel: Option[Channel],
+) extends ChannelBound with Resettable {
+  override def boundChannel: Option[Channel] = channel
+
   /** The minimum value of the parameter. */
   def low: Float
 
@@ -38,6 +44,7 @@ abstract class Parameter(private val initialSourceValue: Float, val channel: Opt
   }
 
   final def reset(): Unit = {
+    super.reset()
     source = ModulationSource.Constant(initialSourceValue)
   }
 }

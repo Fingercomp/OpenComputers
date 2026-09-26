@@ -4,18 +4,29 @@ import li.cil.oc.Settings
 
 import java.util.Random
 
-/** A base class for basic waveforms that do not perform antialiasing. Suitable for LFOs. */
-abstract class AliasingOscillator extends Oscillator {
+/**
+ * A base class for basic waveforms that do not perform antialiasing. Suitable for LFOs.
+ *
+ * Does not support hard sync.
+ */
+abstract class AliasingOscillator(model: OscillatorModel) extends Oscillator(model) {
   private var phase = 0f
   private var deltaPhase = 0f
+
+  reset()
 
   override def reset(): Unit = {
     phase = 0f
     deltaPhase = 0f
+    setFrequency(model.frequency)
   }
 
-  override def setFrequency(freq: Float): Unit = {
+  private def setFrequency(freq: Float): Unit = {
     deltaPhase = freq * Settings.get.audioSamplePeriodSec
+  }
+
+  override def onFrequencyChanged(freq: Float): Unit = {
+    setFrequency(freq)
   }
 
   override def process(samples: Int): Unit = {
@@ -38,12 +49,12 @@ abstract class AliasingOscillator extends Oscillator {
 
 object AliasingOscillator {
   /** An aliasing sine oscillator. Suitable for LFOs. */
-  class Sine extends AliasingOscillator {
+  class Sine(model: OscillatorModel) extends AliasingOscillator(model) {
     override protected def computeSample(phase: Float): Float = math.sin(2 * Math.PI * phase).toFloat
   }
 
   /** An aliasing square oscillator. Suitable for LFOs. */
-  class Square extends AliasingOscillator {
+  class Square(model: OscillatorModel) extends AliasingOscillator(model) {
     override protected def computeSample(phase: Float): Float = {
       if (phase < 0.5f) {
         1f
@@ -54,12 +65,12 @@ object AliasingOscillator {
   }
 
   /** An aliasing sawtooth oscillator. Suitable for LFOs. */
-  class Sawtooth extends AliasingOscillator {
+  class Sawtooth(model: OscillatorModel) extends AliasingOscillator(model) {
     override protected def computeSample(phase: Float): Float = 2 * phase - 1
   }
 
   /** An aliasing triangle oscillator. Suitable for LFOs. */
-  class Triangle extends AliasingOscillator {
+  class Triangle(model: OscillatorModel) extends AliasingOscillator(model) {
     override protected def computeSample(phase: Float): Float = {
       if (phase < 0.5f) {
         2 * phase
@@ -70,7 +81,7 @@ object AliasingOscillator {
   }
 
   /** An aliasing sample-and-hold noise generator. */
-  class SampleAndHoldNoise extends AliasingOscillator {
+  class SampleAndHoldNoise(model: OscillatorModel) extends AliasingOscillator(model) {
     private val random = new Random
     private var value = 0f
 
@@ -88,7 +99,11 @@ object AliasingOscillator {
   }
 
   /** An aliasing LFSR noise generator. */
-  class LfsrNoise(private val initial: Int, private val mask: Int) extends AliasingOscillator {
+  class LfsrNoise(
+    model: OscillatorModel,
+    private val initial: Int,
+    private val mask: Int,
+  ) extends AliasingOscillator(model) {
     private var state = initial
     private var value = 1f
 

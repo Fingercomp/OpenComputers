@@ -6,7 +6,7 @@ import li.cil.oc.common.audio.synth.channel.Channel
 import java.nio.FloatBuffer
 
 /** A base class of low-, band-, and high-pass filters. */
-abstract class SVFilter(initialCutoff: Float, channel: Option[Channel]) extends Filter {
+abstract class SVFilter(initialCutoff: Float, channel: Channel) extends Filter {
   val Cutoff = new Filter.Cutoff(initialCutoff, channel)
   val Resonance = new Filter.Resonance(channel)
 
@@ -18,6 +18,7 @@ abstract class SVFilter(initialCutoff: Float, channel: Option[Channel]) extends 
   protected var d: Float = 0f
 
   override def reset(): Unit = {
+    super.reset()
     Cutoff.reset()
     Resonance.reset()
   }
@@ -58,7 +59,7 @@ object SVFilter {
     }
   }
 
-  class LowPass12dB(channel: Option[Channel]) extends SVFilter(1f, channel) with TwoPole {
+  class LowPass12dB(channel: Channel) extends SVFilter(1f, channel) with TwoPole {
     override protected def processSample(sample: Float, cutoff: Float, reso: Float): Float = {
       val bp = d * (g * (sample - s2) + s1)
       val v1 = bp - s1
@@ -71,7 +72,7 @@ object SVFilter {
     }
   }
 
-  class BandPass12dB(channel: Option[Channel]) extends SVFilter(0.5f, channel) with TwoPole {
+  class BandPass12dB(channel: Channel) extends SVFilter(0.5f, channel) with TwoPole {
     override protected def processSample(sample: Float, cutoff: Float, reso: Float): Float = {
       val bp = d * (g * (2 * reso * sample - s2) + s1)
       val bpDoubled = bp + bp
@@ -82,7 +83,7 @@ object SVFilter {
     }
   }
 
-  class HighPass12dB(channel: Option[Channel]) extends SVFilter(0f, channel) with TwoPole {
+  class HighPass12dB(channel: Channel) extends SVFilter(0f, channel) with TwoPole {
     override protected def processSample(sample: Float, cutoff: Float, reso: Float): Float = {
       val hp = d * (sample - (2 * reso + g) * s1 - s2)
       val v1 = g * hp
@@ -110,7 +111,7 @@ object SVFilter {
     }
   }
 
-  class LowPass24dB(channel: Option[Channel]) extends SVFilter(1f, channel) with FourPole {
+  class LowPass24dB(channel: Channel) extends SVFilter(1f, channel) with FourPole {
     override protected def processSample(sample: Float, cutoff: Float, reso: Float): Float = {
       val bp1 = d * (g * (sample - s2) + s1)
       val v1 = bp1 - s1
@@ -130,7 +131,7 @@ object SVFilter {
     }
   }
 
-  class BandPass24dB(channel: Option[Channel]) extends SVFilter(0.5f, channel) with FourPole {
+  class BandPass24dB(channel: Channel) extends SVFilter(0.5f, channel) with FourPole {
     override protected def processSample(sample: Float, cutoff: Float, reso: Float): Float = {
       val bp1 = d * (g * (2 * reso * sample - s2) + s1)
       val bpDoubled1 = bp1 + bp1
@@ -146,7 +147,7 @@ object SVFilter {
     }
   }
 
-  class HighPass24dB(channel: Option[Channel]) extends SVFilter(0f, channel) with FourPole {
+  class HighPass24dB(channel: Channel) extends SVFilter(0f, channel) with FourPole {
     override protected def processSample(sample: Float, cutoff: Float, reso: Float): Float = {
       val hp1 = d * (sample - (2 * reso + g) * s1 - s2)
       val v1 = g * hp1

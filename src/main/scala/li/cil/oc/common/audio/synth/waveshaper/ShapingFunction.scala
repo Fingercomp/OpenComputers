@@ -7,6 +7,11 @@ trait ShapingFunction {
 }
 
 object ShapingFunction {
+  /** An identity shaper. */
+  object Identity extends ShapingFunction {
+    override def shape(sample: Float, drive: Float): Float = sample
+  }
+
   /** A soft clipper (hyperbolic tangent). */
   object SoftClip extends ShapingFunction {
     // TODO: tabulate.

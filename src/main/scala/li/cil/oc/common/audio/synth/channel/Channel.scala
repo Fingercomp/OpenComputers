@@ -1,12 +1,14 @@
 package li.cil.oc.common.audio.synth.channel
 
-import li.cil.oc.common.audio.synth.{ChannelBound, SignalGenerator}
+import li.cil.oc.common.audio.synth.{SignalGenerator, Synth}
 
 import java.util
 
 /** A synth channel, capable of producing audio signal. */
-abstract class Channel extends SignalGenerator {
+abstract class Channel(val synth: Synth, val id: ChannelId) extends SignalGenerator {
   private var _open = false
+
+  var outputGain = 1f
 
   /**
    * Opens the channel.
@@ -43,16 +45,16 @@ abstract class Channel extends SignalGenerator {
   /** Called after the channel changes its state to closed. */
   protected def onClose(): Unit
 
-  private val boundListeners = new util.IdentityHashMap[ChannelBound, Unit]
+  private val boundListeners = new util.IdentityHashMap[Triggerable, Unit]
 
-  def bindListener(listener: ChannelBound): Unit = {
+  def bindListener(listener: Triggerable): Unit = {
     boundListeners.put(listener, ())
 
     // just `.put()` on its own may return `null`, which I'd rather not.
     ()
   }
 
-  def unbindListener(listener: ChannelBound): Unit = {
+  def unbindListener(listener: Triggerable): Unit = {
     boundListeners.remove(listener, ())
   }
 }

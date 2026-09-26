@@ -1,16 +1,14 @@
 package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
-import li.cil.oc.common.audio.synth.channel.Channel
 import li.cil.oc.common.audio.synth.filter.Downsampler2x
-import li.cil.oc.common.audio.synth.oscillator.WavetableOscillator.Wavetable
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
 import java.nio.FloatBuffer
 
 /** An oscillator that samples a wavetable to produce samples. */
-class WavetableOscillator(channel: Channel, wavetable: Wavetable) extends Oscillator {
-  object Morph extends Parameter(0f, Some(channel)) {
+class WavetableOscillator(model: OscillatorModel) extends Oscillator(model) {
+  object Morph extends Parameter(0f, Some(model.channel)) {
     override def low: Float = 0f
 
     override def high: Float = 1f
@@ -26,16 +24,30 @@ class WavetableOscillator(channel: Channel, wavetable: Wavetable) extends Oscill
   private val oversampledOutput = FloatBuffer.allocate(Settings.get.audioBlockSize * 2)
   private val downsampler = new Downsampler2x
 
+  private var wavetable = model.wavetable
+
+  setFrequency(model.frequency)
+
   override def reset(): Unit = {
     Morph.reset()
     phase = 0f
     deltaPhase = 0f
     downsampler.reset()
+    setFrequency(model.frequency)
+    wavetable = model.wavetable
   }
 
-  override def setFrequency(freq: Float): Unit = {
+  private def setFrequency(freq: Float): Unit = {
     // the formula is freq / sampleRate; divide by 2 since the sample rate we're working with is two times higher.
     deltaPhase = freq * Settings.get.audioSamplePeriodSec * 0.5f
+  }
+
+  override def onFrequencyChanged(freq: Float): Unit = {
+    setFrequency(freq)
+  }
+
+  override def onWavetableChanged(wavetable: WavetableOscillator.Wavetable): Unit = {
+    this.wavetable = wavetable
   }
 
   override def process(samples: Int): Unit = {
@@ -110,6 +122,32 @@ object WavetableOscillator {
 
       // mix the two adjacent waves linearly.
       (1 - mix) * a + mix * b
+    }
+  }
+
+  object Wavetable {
+    val Default: Wavetable = generateDefault()
+
+    private def generateDefault(): Wavetable = {
+      val waveSize = 2048
+      val tableSize = 4
+      val input = FloatBuffer.allocate(waveSize * tableSize)
+
+      for (waveIdx <- 0 until tableSize) {
+        var phase = 0f
+        val deltaPhase = (1 + waveIdx).toFloat / waveSize
+
+        for (_ <- 0 until waveSize) {
+          input.put(phase)
+          phase += deltaPhase
+
+          if (phase >= 1f) {
+            phase -= 1f
+          }
+        }
+      }
+
+      new Wavetable(input, waveSize, oneshot = false)
     }
   }
 }

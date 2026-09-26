@@ -1,11 +1,14 @@
 package li.cil.oc.common.audio.synth.waveshaper
 
 import li.cil.oc.common.audio.synth.channel.Channel
+import li.cil.oc.common.audio.synth.filter.Filter
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
 import java.nio.FloatBuffer
 
-class Waveshaper(var shaper: ShapingFunction, channel: Option[Channel]) {
+class Waveshaper(channel: Option[Channel]) extends Filter {
+  var shaper: ShapingFunction = ShapingFunction.Identity
+
   object Drive extends Parameter(0, channel) {
     override def low: Float = 1f / 256
 
@@ -14,10 +17,15 @@ class Waveshaper(var shaper: ShapingFunction, channel: Option[Channel]) {
     override def curve: Parameter.Curve = Parameter.Curve.Exponential
   }
 
-  def process(buf: FloatBuffer): Unit = {
-    for (i <- buf.position() until buf.limit()) {
-      buf.put(shaper.shape(buf.get(i), Drive.value))
-      Drive.update()
+  override def reset(): Unit = {
+    super.reset()
+    shaper = ShapingFunction.Identity
+    Drive.reset()
+  }
+
+  def process(input: FloatBuffer, output: FloatBuffer): Unit = {
+    while (input.hasRemaining) {
+      output.put(shaper.shape(input.get(), Drive.update()))
     }
   }
 }

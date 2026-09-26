@@ -49,7 +49,9 @@ class Downsampler2x extends Filter {
     * Does not affect the input or output buffers.
     */
   def reset(): Unit = {
+    super.reset()
     util.Arrays.fill(buffer, 0f)
+    idx = 0
   }
 }
 
