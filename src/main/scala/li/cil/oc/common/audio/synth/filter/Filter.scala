@@ -1,13 +1,11 @@
 package li.cil.oc.common.audio.synth.filter
 
-import li.cil.oc.common.audio.synth.Resettable
 import li.cil.oc.common.audio.synth.channel.Channel
 import li.cil.oc.common.audio.synth.parameter.Parameter
-
-import java.nio.FloatBuffer
+import li.cil.oc.common.audio.synth.{AudioBuffer, Resettable}
 
 trait Filter extends Resettable {
-  def process(input: FloatBuffer, output: FloatBuffer): Unit
+  def process(input: AudioBuffer, output: AudioBuffer): Unit
 }
 
 object Filter {

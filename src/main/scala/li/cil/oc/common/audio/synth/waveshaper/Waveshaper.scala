@@ -1,12 +1,10 @@
 package li.cil.oc.common.audio.synth.waveshaper
 
 import li.cil.oc.common.audio.synth.channel.Channel
-import li.cil.oc.common.audio.synth.filter.Filter
+import li.cil.oc.common.audio.synth.filter.PerSampleFilter
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
-import java.nio.FloatBuffer
-
-class Waveshaper(channel: Option[Channel]) extends Filter {
+class Waveshaper(channel: Option[Channel]) extends PerSampleFilter {
   var shaper: ShapingFunction = ShapingFunction.Identity
 
   object Drive extends Parameter(0, channel) {
@@ -23,9 +21,7 @@ class Waveshaper(channel: Option[Channel]) extends Filter {
     Drive.reset()
   }
 
-  def process(input: FloatBuffer, output: FloatBuffer): Unit = {
-    while (input.hasRemaining) {
-      output.put(shaper.shape(input.get(), Drive.update()))
-    }
+  def processSample(input: Float): Float = {
+    shaper.shape(input, Drive.update())
   }
 }

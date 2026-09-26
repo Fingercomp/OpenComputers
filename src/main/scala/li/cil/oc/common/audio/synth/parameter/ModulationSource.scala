@@ -120,13 +120,13 @@ object ModulationSource {
     override def onBound(parameter: Parameter): Unit = {
       super.onBound(parameter)
 
-      for (channel <- parameter.boundChannel) {
+      for (channel <- parameter.channel) {
         channel.bindListener(this)
       }
     }
 
     override def onUnbound(parameter: Parameter): Unit = {
-      for (channel <- parameter.boundChannel) {
+      for (channel <- parameter.channel) {
         channel.unbindListener(this)
       }
 
@@ -147,17 +147,13 @@ object ModulationSource {
   }
 
   class Channel(modChannel: synth.channel.Channel) extends ModulationSource {
-    private var pos = modChannel.output.position()
+    private var pos = modChannel.output.rdIdx
 
-    override def value: Float = modChannel.output.get(pos)
+    override def value: Float = modChannel.output.getAbsolute(pos)
 
     override def update(): Float = {
       val prev = value
-      pos += 1
-
-      if (pos > modChannel.output.limit()) {
-        pos = 0
-      }
+      pos = modChannel.output.wrapIndex(pos + 1)
 
       prev
     }
@@ -165,13 +161,13 @@ object ModulationSource {
     override def onBound(parameter: Parameter): Unit = {
       super.onBound(parameter)
 
-      for (targetChannel <- parameter.boundChannel) {
+      for (targetChannel <- parameter.channel) {
         modChannel.synth.addChannelSend(modChannel.id, targetChannel.id, this)
       }
     }
 
     override def onUnbound(parameter: Parameter): Unit = {
-      for (targetChannel <- parameter.boundChannel) {
+      for (targetChannel <- parameter.channel) {
         modChannel.synth.removeChannelSend(modChannel.id, targetChannel.id, this)
       }
 

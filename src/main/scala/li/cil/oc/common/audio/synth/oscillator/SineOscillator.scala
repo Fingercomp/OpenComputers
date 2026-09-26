@@ -1,9 +1,8 @@
 package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
+import li.cil.oc.common.audio.synth.AudioBuffer
 import li.cil.oc.common.audio.synth.filter.Downsampler2x
-
-import java.nio.FloatBuffer
 
 class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
   // follower phase, in [0; 1).
@@ -17,7 +16,7 @@ class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
 
   // on its own sine has no aliasing issues, but hard sync makes things complicated. unlike, say, square or triangle, we
   // can't make the problem go away with integration tricks, and so we have to resort to oversampling.
-  private val oversampledOutput = FloatBuffer.allocate(Settings.get.audioBlockSize * 2)
+  private val oversampledOutput = new AudioBuffer(Settings.get.audioBlockSize * 2)
   private val downsampler = new Downsampler2x
 
   setFrequency(model.frequency)
@@ -40,8 +39,6 @@ class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
   }
 
   override def process(samples: Int): Unit = {
-    oversampledOutput.clear()
-
     for (_ <- 0 until samples) {
       oversampledOutput.put(nextSample())
       oversampledOutput.put(nextSample())

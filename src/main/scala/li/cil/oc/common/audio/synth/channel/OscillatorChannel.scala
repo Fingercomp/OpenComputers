@@ -16,7 +16,9 @@ trait OscillatorChannel extends Channel {
     }
   }
 
-  private var _oscillator: Oscillator = new ZeroOscillator(OscillatorModel(this))
+  val Sync = new Oscillator.Sync(this)
+  val oscillatorModel = OscillatorModel(this)
+  private var _oscillator: Oscillator = new ZeroOscillator(oscillatorModel)
 
   def oscillator: Oscillator = _oscillator
 
@@ -27,6 +29,8 @@ trait OscillatorChannel extends Channel {
     }
   }
 
+  // TODO: envelope.
+
   object OscillatorLevel extends Parameter(1f, Some(this)) {
     override def low: Float = 0f
 
@@ -36,5 +40,30 @@ trait OscillatorChannel extends Channel {
   override def reset(): Unit = {
     super.reset()
     frequency = 0f
+    Sync.reset()
+    oscillator = new ZeroOscillator(oscillatorModel)
+    OscillatorLevel.reset()
+  }
+
+  override protected def onOpen(): Unit = {
+    super.onOpen()
+    oscillator.onOpen()
+  }
+
+  override protected def onClose(): Unit = {
+    super.onClose()
+    oscillator.onClose()
+  }
+
+  override def process(samples: Int): Unit = {
+    super.process(samples)
+
+    // generate samples.
+    oscillator.process(samples)
+
+    // attenuate them according to the oscillator level.
+    for (i <- 0 until oscillator.output.remaining) {
+      oscillator.output.replace(i, oscillator.output.getAt(i) * OscillatorLevel.update())
+    }
   }
 }

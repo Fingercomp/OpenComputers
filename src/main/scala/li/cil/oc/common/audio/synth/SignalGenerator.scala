@@ -1,11 +1,7 @@
 package li.cil.oc.common.audio.synth
 
-import li.cil.oc.Settings
-
-import java.nio.FloatBuffer
-
 trait SignalGenerator extends Resettable {
-  final val output: FloatBuffer = FloatBuffer.allocate(Settings.get.audioBlockSize)
+  final val output: AudioBuffer = AudioBuffer.makeBlockSized()
 
   /**
    * Synthesizes the given number of samples in the [[output]].

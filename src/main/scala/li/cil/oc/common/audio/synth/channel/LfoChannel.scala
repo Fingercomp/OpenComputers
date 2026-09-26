@@ -3,11 +3,11 @@ package li.cil.oc.common.audio.synth.channel
 import li.cil.oc.common.audio.synth.Synth
 
 class LfoChannel(synth: Synth, id: ChannelId) extends Channel(synth, id) with OscillatorChannel {
-  override protected def onOpen(): Unit = ???
+  override def process(samples: Int): Unit = {
+    super.process(samples)
 
-  override protected def onClose(): Unit = ???
-
-  override def process(samples: Int): Unit = ???
-
-  override def reset(): Unit = ???
+    while (oscillator.output.nonEmpty) {
+      output.put(oscillator.output.get() * outputGain)
+    }
+  }
 }

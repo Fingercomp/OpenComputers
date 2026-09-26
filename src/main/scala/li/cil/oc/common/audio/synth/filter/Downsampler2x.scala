@@ -1,8 +1,8 @@
 package li.cil.oc.common.audio.synth.filter
 
+import li.cil.oc.common.audio.synth.AudioBuffer
 import li.cil.oc.common.audio.synth.filter.Downsampler2x.{Coeffs, Taps}
 
-import java.nio.FloatBuffer
 import java.util
 
 /** A 2× downsampler. Reduces the sample rate of input in half. */
@@ -17,8 +17,8 @@ class Downsampler2x extends Filter {
     * Writes the result to the output, which must have enough space for half the remaining samples in the input.
     * The input may contain up to one unprocessed sample after the call.
     */
-  def process(input: FloatBuffer, output: FloatBuffer): Unit = {
-    while (input.remaining() >= 2) {
+  def process(input: AudioBuffer, output: AudioBuffer): Unit = {
+    while (input.remaining >= 2) {
       buffer(Taps + idx) = input.get()
       buffer(Taps + idx + 1) = input.get()
 

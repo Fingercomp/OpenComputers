@@ -11,7 +11,7 @@ class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
   private val lfoChannels = Array.tabulate(lfoChannelCount)(idx => new LfoChannel(this, ChannelId.Lfo(idx)))
   private val masterChannel = new MasterChannel(this)
 
-  private val graph = new RoutingGraph
+  private val graph = new RoutingGraph(voiceChannelCount, lfoChannelCount)
 
   var wavetable: Wavetable = Wavetable.Default
 
@@ -39,6 +39,15 @@ class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
   override def reset(): Unit = {
     super.reset()
 
+    ???
+  }
+
+  def process(samples: Int): Unit = {
+    for (channelId <- graph.toposort) {
+      channelById(channelId).process(samples)
+    }
+
+    // TODO: mix channels together and run the master channel's process().
     ???
   }
 }

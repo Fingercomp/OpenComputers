@@ -2,7 +2,6 @@ package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.common.audio.synth.channel.{Channel, OscillatorChannel}
 import li.cil.oc.common.audio.synth.oscillator.WavetableOscillator.Wavetable
-import li.cil.oc.common.audio.synth.parameter.Parameter
 
 /** External properties common to all oscillators. */
 trait OscillatorModel {
@@ -15,13 +14,7 @@ trait OscillatorModel {
   /** The global wavetable. */
   def wavetable: Wavetable
 
-  object Sync extends Parameter(1f, Some(channel)) {
-    override def low: Float = 1f
-
-    override def high: Float = 3f
-
-    override def curve: Parameter.Curve = Parameter.Curve.Exponential
-  }
+  def Sync: Oscillator.Sync
 }
 
 object OscillatorModel {
@@ -39,5 +32,7 @@ object OscillatorModel {
     override def frequency: Float = ch.frequency
 
     override def wavetable: Wavetable = ch.synth.wavetable
+
+    override def Sync: Oscillator.Sync = ch.Sync
   }
 }

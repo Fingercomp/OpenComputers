@@ -1,13 +1,13 @@
 package li.cil.oc.common.audio.synth.channel
 
-import li.cil.oc.common.audio.synth.filter.Filter
+import li.cil.oc.common.audio.synth.filter.PerSampleFilter
 
-trait FilterChannel extends Channel {
-  private var _filter: Option[Filter] = None
+trait FilteredChannel extends Channel {
+  private var _filter: Option[PerSampleFilter] = None
 
-  def filter: Option[Filter] = _filter
+  def filter: Option[PerSampleFilter] = _filter
 
-  def filter_=(filter: Option[Filter]): Unit = {
+  def filter_=(filter: Option[PerSampleFilter]): Unit = {
     (_filter, filter) match {
       case (None, None) =>
       case (Some(prev), Some(next)) if prev eq next =>

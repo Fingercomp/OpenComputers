@@ -3,10 +3,8 @@ package li.cil.oc.common.audio.synth.filter
 import li.cil.oc.Settings
 import li.cil.oc.common.audio.synth.channel.Channel
 
-import java.nio.FloatBuffer
-
 /** A base class of low-, band-, and high-pass filters. */
-abstract class SVFilter(initialCutoff: Float, channel: Channel) extends Filter {
+abstract class SVFilter(initialCutoff: Float, channel: Channel) extends PerSampleFilter {
   val Cutoff = new Filter.Cutoff(initialCutoff, channel)
   val Resonance = new Filter.Resonance(channel)
 
@@ -23,19 +21,17 @@ abstract class SVFilter(initialCutoff: Float, channel: Channel) extends Filter {
     Resonance.reset()
   }
 
-  override def process(input: FloatBuffer, output: FloatBuffer): Unit = {
-    while (input.hasRemaining) {
-      val cutoff = Cutoff.update()
-      val reso = Resonance.update()
+  override def processSample(input: Float): Float = {
+    val cutoff = Cutoff.update()
+    val reso = Resonance.update()
 
-      if (cutoff != prevCutoff || reso != prevReso) {
-        updateCoeffs(cutoff, reso)
-        prevCutoff = cutoff
-        prevReso = reso
-      }
-
-      output.put(processSample(input.get(), cutoff, reso))
+    if (cutoff != prevCutoff || reso != prevReso) {
+      updateCoeffs(cutoff, reso)
+      prevCutoff = cutoff
+      prevReso = reso
     }
+
+    processSample(input, cutoff, reso)
   }
 
   private def updateCoeffs(cutoff: Float, reso: Float): Unit = {
