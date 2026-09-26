@@ -1,9 +1,10 @@
 package li.cil.oc.common.audio.synth
 
-import li.cil.oc.common.audio.synth.channel.{Channel, ChannelId, LfoChannel, MasterChannel, VoiceChannel}
+import li.cil.oc.common.audio.synth.channel.{Channel, ChannelId, LfoChannel, MasterChannel, OscillatorChannel, VoiceChannel}
 import li.cil.oc.common.audio.synth.oscillator.WavetableOscillator.Wavetable
 import li.cil.oc.common.audio.synth.routing.RoutingGraph
 
+import java.nio.ByteBuffer
 import scala.annotation.unused
 
 class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
@@ -11,9 +12,24 @@ class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
   private val lfoChannels = Array.tabulate(lfoChannelCount)(idx => new LfoChannel(this, ChannelId.Lfo(idx)))
   private val masterChannel = new MasterChannel(this)
 
+  def oscillatorChannels: Iterator[OscillatorChannel] = voiceChannels.iterator ++ lfoChannels.iterator
+  def channels: Iterator[Channel] = oscillatorChannels ++ Iterator(masterChannel)
+
   private val graph = new RoutingGraph(voiceChannelCount, lfoChannelCount)
 
-  var wavetable: Wavetable = Wavetable.Default
+  private var _wavetable: Wavetable = Wavetable.Default
+
+  def wavetable: Wavetable = _wavetable
+
+  def wavetable_=(wavetable: Wavetable): Unit = {
+    if (_wavetable ne wavetable) {
+      _wavetable = wavetable
+
+      for (channel <- channels) {
+        channel.onWavetableChanged(wavetable)
+      }
+    }
+  }
 
   def channelById(id: ChannelId): Channel = id match {
     case id: ChannelId.Voice => channelById(id)
@@ -39,15 +55,44 @@ class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
   override def reset(): Unit = {
     super.reset()
 
-    ???
+    for (channel <- channels) {
+      channel.reset()
+    }
+
+    graph.reset()
+    wavetable = Wavetable.Default
   }
 
-  def process(samples: Int): Unit = {
+  def process(samples: Int, output: ByteBuffer): Unit = {
     for (channelId <- graph.toposort) {
       channelById(channelId).process(samples)
     }
 
-    // TODO: mix channels together and run the master channel's process().
-    ???
+    val wrIdx = masterChannel.output.wrIdx
+
+    // skip channels that act as modulators.
+    for (voiceChannel <- voiceChannels if !graph.hasSends(voiceChannel.id)) {
+      for (i <- 0 until voiceChannel.output.remaining) {
+        val out = voiceChannel.output.getAt(i) * voiceChannel.MasterSendLevel.update()
+        masterChannel.output.putAbsolute(wrIdx + i, masterChannel.output.getAbsolute(wrIdx + i) + out)
+      }
+    }
+
+    masterChannel.process(samples)
+
+    for (_ <- 0 until samples) {
+      output.put(quantize(masterChannel.output.get()))
+    }
+
+    // now update the output buffers so that the next process() has room for writing.
+    for (voiceChannel <- channels) {
+      voiceChannel.output.skipUnread()
+    }
+  }
+
+  private def quantize(sample: Float): Byte = {
+    val unipolar = (sample + 1) * 0.5f
+
+    (unipolar * 255).toByte
   }
 }

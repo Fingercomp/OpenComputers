@@ -72,6 +72,16 @@ class AudioBuffer(val length: Int) {
 
   def wrapIndex(idx: Int): Int = idx & mask
 
+  /** Increments the write position by the given offset. */
+  @throws[IllegalArgumentException]("if the buffer does not have enough space")
+  def bumpWritePos(offset: Int): Unit = {
+    if (offset < 0 || offset >= length - remaining) {
+      throw new IllegalArgumentException("not enough space in ring buffer")
+    }
+
+    _wrIdx = _wrIdx + offset & mask
+  }
+
   def remaining: Int = {
     if (full) {
       0

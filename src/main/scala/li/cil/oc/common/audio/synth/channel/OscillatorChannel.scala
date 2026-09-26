@@ -1,6 +1,6 @@
 package li.cil.oc.common.audio.synth.channel
 
-import li.cil.oc.common.audio.synth.oscillator.{Oscillator, OscillatorModel, ZeroOscillator}
+import li.cil.oc.common.audio.synth.oscillator.{Oscillator, OscillatorModel, WavetableOscillator, ZeroOscillator}
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
 /** A channel with an oscillator. */
@@ -43,6 +43,11 @@ trait OscillatorChannel extends Channel {
     Sync.reset()
     oscillator = new ZeroOscillator(oscillatorModel)
     OscillatorLevel.reset()
+  }
+
+  override def onWavetableChanged(wavetable: WavetableOscillator.Wavetable): Unit = {
+    super.onWavetableChanged(wavetable)
+    oscillator.onWavetableChanged(wavetable)
   }
 
   override protected def onOpen(): Unit = {

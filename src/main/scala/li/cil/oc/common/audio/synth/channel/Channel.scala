@@ -1,5 +1,6 @@
 package li.cil.oc.common.audio.synth.channel
 
+import li.cil.oc.common.audio.synth.oscillator.WavetableOscillator.Wavetable
 import li.cil.oc.common.audio.synth.{SignalGenerator, Synth}
 
 import java.util
@@ -15,6 +16,9 @@ abstract class Channel(val synth: Synth, val id: ChannelId) extends SignalGenera
     outputGain = 1f
     super.reset()
   }
+
+  /** Called by [[Synth]] when the wavetable is changed. */
+  def onWavetableChanged(wavetable: Wavetable): Unit = {}
 
   /**
    * Opens the channel.
