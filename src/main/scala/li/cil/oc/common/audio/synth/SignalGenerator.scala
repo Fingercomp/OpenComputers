@@ -1,7 +1,7 @@
 package li.cil.oc.common.audio.synth
 
 trait SignalGenerator extends Resettable {
-  final val output: AudioBuffer = AudioBuffer.makeBlockSized()
+  final val output: SampleBuffer = SampleBuffer.makeBlockSized()
 
   /**
    * Synthesizes the given number of samples in the [[output]].

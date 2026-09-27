@@ -3,7 +3,7 @@ package li.cil.oc.common.audio.synth
 import li.cil.oc.Settings
 
 /** A ring buffer of the given length (must be a power of two) that stores float samples. */
-class AudioBuffer(val length: Int) {
+class SampleBuffer(val length: Int) {
   require((length & length - 1) == 0, "length must be a power of two")
   private val mask = length - 1
   private val samples = Array.fill(length)(0f)
@@ -95,6 +95,6 @@ class AudioBuffer(val length: Int) {
   def nonEmpty: Boolean = !isEmpty
 }
 
-object AudioBuffer {
-  def makeBlockSized(): AudioBuffer = new AudioBuffer(Settings.get.audioBlockSize)
+object SampleBuffer {
+  def makeBlockSized(): SampleBuffer = new SampleBuffer(Settings.get.audioBlockSize)
 }

@@ -2,10 +2,10 @@ package li.cil.oc.common.audio.synth.filter
 
 import li.cil.oc.common.audio.synth.channel.Channel
 import li.cil.oc.common.audio.synth.parameter.Parameter
-import li.cil.oc.common.audio.synth.{AudioBuffer, Resettable}
+import li.cil.oc.common.audio.synth.{SampleBuffer, Resettable}
 
 trait Filter extends Resettable {
-  def process(input: AudioBuffer, output: AudioBuffer): Unit
+  def process(input: SampleBuffer, output: SampleBuffer): Unit
 }
 
 object Filter {

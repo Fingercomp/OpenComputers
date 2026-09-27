@@ -1,6 +1,6 @@
 package li.cil.oc.common.audio.synth.effect
 
-import li.cil.oc.common.audio.synth.AudioBuffer
+import li.cil.oc.common.audio.synth.SampleBuffer
 import li.cil.oc.common.audio.synth.channel.Channel
 import li.cil.oc.common.audio.synth.filter.Filter
 
@@ -36,7 +36,7 @@ class FixedDelay(
     idx = 0
   }
 
-  override def process(input: AudioBuffer, output: AudioBuffer): Unit = {
+  override def process(input: SampleBuffer, output: SampleBuffer): Unit = {
     while (input.nonEmpty) {
       val dry = Dry.update()
       val wet = Wet.update()

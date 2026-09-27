@@ -1,8 +1,11 @@
 package li.cil.oc.common.audio.synth.channel
 
 import li.cil.oc.common.audio.synth.Synth
+import li.cil.oc.common.audio.synth.operator.FmOperator
 
 class LfoChannel(synth: Synth, id: ChannelId) extends Channel(synth, id) with OscillatorChannel {
+  override protected def fmOperator: Option[FmOperator] = None
+
   override def process(samples: Int): Unit = {
     super.process(samples)
 

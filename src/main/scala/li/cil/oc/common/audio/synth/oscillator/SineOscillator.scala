@@ -1,7 +1,7 @@
 package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
-import li.cil.oc.common.audio.synth.AudioBuffer
+import li.cil.oc.common.audio.synth.SampleBuffer
 import li.cil.oc.common.audio.synth.filter.Downsampler2x
 
 class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
@@ -16,7 +16,7 @@ class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
 
   // on its own sine has no aliasing issues, but hard sync makes things complicated. unlike, say, square or triangle, we
   // can't make the problem go away with integration tricks, and so we have to resort to oversampling.
-  private val oversampledOutput = new AudioBuffer(Settings.get.audioBlockSize * 2)
+  private val oversampledOutput = new SampleBuffer(Settings.get.audioBlockSize * 2)
   private val downsampler = new Downsampler2x
 
   setFrequency(model.frequency)

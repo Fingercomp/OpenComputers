@@ -1,7 +1,7 @@
 package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
-import li.cil.oc.common.audio.synth.AudioBuffer
+import li.cil.oc.common.audio.synth.SampleBuffer
 import li.cil.oc.common.audio.synth.filter.Downsampler2x
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
@@ -22,7 +22,7 @@ class WavetableOscillator(model: OscillatorModel) extends Oscillator(model) {
   private var deltaPhase = 0f
 
   // perform oversampling to reduce aliasing somewhat.
-  private val oversampledOutput = new AudioBuffer(Settings.get.audioBlockSize * 2)
+  private val oversampledOutput = new SampleBuffer(Settings.get.audioBlockSize * 2)
   private val downsampler = new Downsampler2x
 
   private var wavetable = model.wavetable

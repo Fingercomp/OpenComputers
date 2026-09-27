@@ -1,5 +1,6 @@
 package li.cil.oc.common.audio.synth.oscillator
 
+import li.cil.oc.common.audio.synth.SampleBuffer
 import li.cil.oc.common.audio.synth.channel.{Channel, OscillatorChannel}
 import li.cil.oc.common.audio.synth.oscillator.WavetableOscillator.Wavetable
 
@@ -14,7 +15,15 @@ trait OscillatorModel {
   /** The global wavetable. */
   def wavetable: Wavetable
 
+  /**
+   * The hard sync rate parameter.
+   *
+   * Must be updated by the oscillator even if it's otherwise unused.
+   */
   def Sync: Oscillator.Sync
+
+  /** The frequency modulation input. */
+  def fm: Option[SampleBuffer]
 }
 
 object OscillatorModel {
@@ -24,15 +33,5 @@ object OscillatorModel {
 
     /** Called whenever the wavetable changes in the model. */
     def onWavetableChanged(wavetable: Wavetable): Unit = {}
-  }
-
-  def apply(ch: OscillatorChannel): OscillatorModel = new OscillatorModel {
-    override def channel: Channel = ch
-
-    override def frequency: Float = ch.frequency
-
-    override def wavetable: Wavetable = ch.synth.wavetable
-
-    override def Sync: Oscillator.Sync = ch.Sync
   }
 }

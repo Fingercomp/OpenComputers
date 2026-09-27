@@ -1,11 +1,14 @@
 package li.cil.oc.common.audio.synth.channel
 
+import li.cil.oc.common.audio.synth.SampleBuffer
 import li.cil.oc.common.audio.synth.envelope.AdsrEnvelope
+import li.cil.oc.common.audio.synth.operator.FmOperator
+import li.cil.oc.common.audio.synth.oscillator.WavetableOscillator.Wavetable
 import li.cil.oc.common.audio.synth.oscillator.{Oscillator, OscillatorModel, WavetableOscillator, ZeroOscillator}
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
 /** A channel with an oscillator. */
-trait OscillatorChannel extends Channel {
+trait OscillatorChannel extends Channel { oscCh =>
   private var _frequency: Float = 0f
 
   def frequency: Float = _frequency
@@ -17,8 +20,22 @@ trait OscillatorChannel extends Channel {
     }
   }
 
+  protected def fmOperator: Option[FmOperator]
+
   val Sync = new Oscillator.Sync(this)
-  val oscillatorModel = OscillatorModel(this)
+
+  val oscillatorModel = new OscillatorModel {
+    override def channel: Channel = oscCh
+
+    override def frequency: Float = oscCh.frequency
+
+    override def wavetable: Wavetable = oscCh.synth.wavetable
+
+    override def Sync: Oscillator.Sync = oscCh.Sync
+
+    override def fm: Option[SampleBuffer] = oscCh.fmOperator.map(_.output)
+  }
+
   private var _oscillator: Oscillator = new ZeroOscillator(oscillatorModel)
 
   def oscillator: Oscillator = _oscillator
@@ -64,6 +81,12 @@ trait OscillatorChannel extends Channel {
 
   override def process(samples: Int): Unit = {
     super.process(samples)
+
+    for (fm <- fmOperator) {
+      // remove fm data from previous process() if the oscillator neglects to read it.
+      fm.output.skipUnread()
+      fm.process(samples)
+    }
 
     // generate samples.
     oscillator.process(samples)
