@@ -30,6 +30,7 @@ class AdsrOscillator(model: OscillatorModel) extends Oscillator(model) {
 
   override def process(samples: Int): Unit = {
     for (_ <- 0 until samples) {
+      model.Sync.update()
       output.put(envelope.update())
     }
   }

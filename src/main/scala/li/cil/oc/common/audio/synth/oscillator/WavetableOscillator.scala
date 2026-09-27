@@ -56,6 +56,7 @@ class WavetableOscillator(model: OscillatorModel) extends Oscillator(model) {
       oversampledOutput.put(nextSample())
       oversampledOutput.put(nextSample())
       Morph.update()
+      model.Sync.update()
     }
 
     downsampler.process(oversampledOutput, output)

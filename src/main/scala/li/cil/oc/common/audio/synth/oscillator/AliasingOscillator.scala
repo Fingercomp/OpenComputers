@@ -31,6 +31,7 @@ abstract class AliasingOscillator(model: OscillatorModel) extends Oscillator(mod
 
   override def process(samples: Int): Unit = {
     for (_ <- 0 until samples) {
+      model.Sync.update()
       output.put(computeSample(phase))
 
       phase += deltaPhase
