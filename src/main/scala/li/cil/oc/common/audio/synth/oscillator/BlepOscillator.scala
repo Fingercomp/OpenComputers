@@ -76,6 +76,23 @@ abstract class BlepOscillator(model: OscillatorModel) extends Oscillator(model) 
     var out = delayedOut
     delayedOut = 0
 
+    val deltaSyncPhase = model.fm match {
+      case Some(fm) =>
+        // no antialiasing guarantees are made in the presence of fm.
+        val delta = this.deltaSyncPhase + fm.get() * Settings.get.audioSamplePeriodSec
+
+        // clamp it within the expected range.
+        if (delta > 1f) {
+          delta - delta.floor
+        } else if (delta < 0f) {
+          delta + 1 - delta.ceil
+        } else {
+          delta
+        }
+
+      case None => this.deltaSyncPhase
+    }
+
     if (deltaSyncPhase < 1e-6f) {
       // this is basically DC.
       return computeAliasedSample()

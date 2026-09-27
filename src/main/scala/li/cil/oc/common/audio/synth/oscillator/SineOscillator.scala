@@ -40,15 +40,30 @@ class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
 
   override def process(samples: Int): Unit = {
     for (_ <- 0 until samples) {
-      oversampledOutput.put(nextSample())
-      oversampledOutput.put(nextSample())
+      val deltaSyncPhase = model.fm match {
+        case Some(fm) =>
+          val delta = this.deltaSyncPhase + fm.get() * Settings.get.audioSamplePeriodSec * 0.5f
+
+          if (delta > 1f) {
+            delta - delta.floor
+          } else if (delta < 0f) {
+            delta + 1f - delta.ceil
+          } else {
+            delta
+          }
+
+        case None => this.deltaSyncPhase
+      }
+
+      oversampledOutput.put(nextSample(deltaSyncPhase))
+      oversampledOutput.put(nextSample(deltaSyncPhase))
       model.Sync.update()
     }
 
     downsampler.process(oversampledOutput, output)
   }
 
-  private def nextSample(): Float = {
+  private def nextSample(deltaSyncPhase: Float): Float = {
     syncPhase += deltaSyncPhase
 
     if (syncPhase >= 1f) {

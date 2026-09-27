@@ -53,8 +53,23 @@ class WavetableOscillator(model: OscillatorModel) extends Oscillator(model) {
 
   override def process(samples: Int): Unit = {
     for (_ <- 0 until samples) {
-      oversampledOutput.put(nextSample())
-      oversampledOutput.put(nextSample())
+      val deltaPhase = model.fm match {
+        case Some(fm) =>
+          val delta = this.deltaPhase + fm.get() * Settings.get.audioSamplePeriodSec * 0.5f
+
+          if (delta > 1f) {
+            delta - delta.floor
+          } else if (delta < 0f) {
+            delta + 1 - delta.ceil
+          } else {
+            delta
+          }
+
+        case None => this.deltaPhase
+      }
+
+      oversampledOutput.put(nextSample(deltaPhase))
+      oversampledOutput.put(nextSample(deltaPhase))
       Morph.update()
       model.Sync.update()
     }
@@ -62,7 +77,7 @@ class WavetableOscillator(model: OscillatorModel) extends Oscillator(model) {
     downsampler.process(oversampledOutput, output)
   }
 
-  private def nextSample(): Float = {
+  private def nextSample(deltaPhase: Float): Float = {
     val out = wavetable.sample(Morph.value, phase)
     phase += deltaPhase
 

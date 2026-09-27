@@ -36,9 +36,24 @@ abstract class AliasingOscillator(model: OscillatorModel) extends Oscillator(mod
 
       phase += deltaPhase
 
-      if (phase > 1f) {
-        phase -= 1f
-        onPhaseReset()
+      model.fm match {
+        case Some(fm) =>
+          phase += fm.get() * Settings.get.audioSamplePeriodSec
+
+          // use floor/ceil because of fm.
+          if (phase > 1f) {
+            phase -= phase.floor
+            onPhaseReset()
+          } else if (phase < 0f) {
+            phase += 1 - phase.ceil
+            onPhaseReset()
+          }
+
+        case None =>
+          if (phase > 1f) {
+            phase -= 1f
+            onPhaseReset()
+          }
       }
     }
   }
