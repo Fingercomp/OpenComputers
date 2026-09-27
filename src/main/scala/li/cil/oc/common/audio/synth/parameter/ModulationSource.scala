@@ -1,8 +1,8 @@
 package li.cil.oc.common.audio.synth.parameter
 
-import li.cil.oc.Settings
 import li.cil.oc.common.audio.synth
 import li.cil.oc.common.audio.synth.channel.Triggerable
+import li.cil.oc.common.audio.synth.envelope.AdsrEnvelope
 
 /** Provides a value between 0 and 1. */
 sealed trait ModulationSource {
@@ -32,89 +32,42 @@ object ModulationSource {
   }
 
   class Adsr(
-    attackMs: Float,
-    decayMs: Float,
+    attack: Float,
+    decay: Float,
     sustain: Float,
-    releaseMs: Float,
+    release: Float,
     low: Float,
     high: Float,
   ) extends ModulationSource with Triggerable {
-    private var state: Adsr.State = Adsr.State.Closed
-    private var elapsedMs = 0f
-    private var _value = 0f
-
-    private val attackRate = 1 / attackMs
-
-    private val decayRate = {
-      if (1 - sustain < 1e-4f) {
-        0
-      } else {
-        (1 - sustain) / decayMs
-      }
-    }
-
-    private val releaseRate = 1 / releaseMs
-    private var valueAtClose = 0f
-
-    override def value: Float = _value * high + (1 - _value) * low
+    private val envelope = new AdsrEnvelope(None)
+    envelope.Attack.source = Constant(attack)
+    envelope.Decay.source = Constant(decay)
+    envelope.Sustain.source = Constant(sustain)
+    envelope.Release.source = Constant(release)
 
     override def onOpen(): Unit = {
       super.onOpen()
-      state = Adsr.State.Attack
-      elapsedMs = 0
-      updateState()
+      envelope.onOpen()
     }
 
     override def onClose(): Unit = {
       super.onClose()
-      state = Adsr.State.Release
-      elapsedMs = 0
-      valueAtClose = _value
-      updateState()
+      envelope.onClose()
     }
+
+    private var _value = mapEnvelopeValue(envelope.update())
+
+    private def mapEnvelopeValue(t: Float): Float = {
+      (1 - t) * low + t * high
+    }
+
+    override def value: Float = _value
 
     override def update(): Float = {
-      val prev = value
-      elapsedMs += Settings.get.audioSamplePeriodMs
-      updateState()
+      val result = _value
+      _value = mapEnvelopeValue(envelope.update())
 
-      prev
-    }
-
-    private def updateState(): Unit = {
-      if (state == Adsr.State.Attack) {
-        if (elapsedMs >= attackMs) {
-          elapsedMs -= attackMs
-          _value = 1f
-          state = Adsr.State.Decay
-        } else {
-          _value = (attackRate * elapsedMs).min(1)
-
-          return
-        }
-      }
-
-      if (state == Adsr.State.Decay) {
-        if (elapsedMs >= decayMs) {
-          elapsedMs -= decayMs
-          _value = sustain
-          state = Adsr.State.Sustain
-        } else {
-          _value = (1 - decayRate * elapsedMs).max(0).min(1)
-
-          return
-        }
-      }
-
-      if (state == Adsr.State.Release) {
-        if (elapsedMs > releaseMs) {
-          elapsedMs = 0
-          _value = 0
-          state = Adsr.State.Closed
-        } else {
-          _value = (valueAtClose * (1 - releaseRate * elapsedMs)).max(0).min(1)
-        }
-      }
+      result
     }
 
     override def onBound(parameter: Parameter): Unit = {
@@ -131,18 +84,6 @@ object ModulationSource {
       }
 
       super.onUnbound(parameter)
-    }
-  }
-
-  private object Adsr {
-    sealed trait State
-
-    private object State {
-      case object Attack extends State
-      case object Decay extends State
-      case object Sustain extends State
-      case object Release extends State
-      case object Closed extends State
     }
   }
 
