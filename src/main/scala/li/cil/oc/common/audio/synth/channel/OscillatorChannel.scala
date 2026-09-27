@@ -1,5 +1,6 @@
 package li.cil.oc.common.audio.synth.channel
 
+import li.cil.oc.common.audio.synth.envelope.AdsrEnvelope
 import li.cil.oc.common.audio.synth.oscillator.{Oscillator, OscillatorModel, WavetableOscillator, ZeroOscillator}
 import li.cil.oc.common.audio.synth.parameter.Parameter
 
@@ -29,7 +30,7 @@ trait OscillatorChannel extends Channel {
     }
   }
 
-  // TODO: envelope.
+  val envelope = new AdsrEnvelope(Some(this))
 
   object OscillatorLevel extends Parameter(1f, Some(this)) {
     override def low: Float = 0f
@@ -42,6 +43,7 @@ trait OscillatorChannel extends Channel {
     frequency = 0f
     Sync.reset()
     oscillator = new ZeroOscillator(oscillatorModel)
+    envelope.reset()
     OscillatorLevel.reset()
   }
 
@@ -66,9 +68,10 @@ trait OscillatorChannel extends Channel {
     // generate samples.
     oscillator.process(samples)
 
-    // attenuate them according to the oscillator level.
-    for (i <- 0 until oscillator.output.remaining) {
-      oscillator.output.replace(i, oscillator.output.getAt(i) * OscillatorLevel.update())
+    // attenuate them according to the envelope and oscillator level.
+    for (i <- 0 until samples) {
+      val envLevel = envelope.update()
+      oscillator.output.replace(i, oscillator.output.getAt(i) * OscillatorLevel.update() * envLevel)
     }
   }
 }
