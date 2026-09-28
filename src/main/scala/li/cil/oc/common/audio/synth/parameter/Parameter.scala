@@ -42,6 +42,23 @@ abstract class Parameter(private val initialSourceValue: Float, val channel: Opt
     super.reset()
     source = ModulationSource.Constant(initialSourceValue)
   }
+
+  final def setConstant(value: Float): Unit = {
+    val t = curve.inverse(value, low, high)
+
+    source = ModulationSource.Constant(t)
+  }
+
+  final def setAdsr(attack: Float, decay: Float, sustain: Float, release: Float, low: Float, high: Float): Unit = {
+    val tLow = curve.inverse(low, this.low, this.high)
+    val tHigh = curve.inverse(high, this.low, this.high)
+
+    source = new ModulationSource.Adsr(attack, decay, sustain, release, tLow, tHigh)
+  }
+
+  final def modulateBy(modChannel: Channel): Unit = {
+    source = new ModulationSource.Channel(modChannel)
+  }
 }
 
 object Parameter {
@@ -49,11 +66,16 @@ object Parameter {
   trait Curve {
     /** Scales the input value (taken from [0; 1]) to a value between `low` and `high` according to the curve. */
     def map(value: Float, low: Float, high: Float): Float
+
+    /** Performs the inverse of map. */
+    def inverse(value: Float, low: Float, high: Float): Float
   }
 
   object Curve {
     object Linear extends Curve {
       override def map(value: Float, low: Float, high: Float): Float = value * high + (1 - value) * low
+
+      override def inverse(value: Float, low: Float, high: Float): Float = value / (high - low)
     }
 
     object Quadratic extends Curve {
@@ -62,10 +84,20 @@ object Parameter {
 
         t * high + (1 - t) * low
       }
+
+      override def inverse(value: Float, low: Float, high: Float): Float = {
+        math.sqrt(value / (high - low)).toFloat
+      }
     }
 
     object Exponential extends Curve {
-      override def map(value: Float, low: Float, high: Float): Float = low * math.pow(high / low, value).toFloat
+      override def map(value: Float, low: Float, high: Float): Float = {
+        low * math.pow(high / low, value).toFloat
+      }
+
+      override def inverse(value: Float, low: Float, high: Float): Float = {
+        (math.log(value / low) / math.log(high / low)).toFloat
+      }
     }
   }
 }

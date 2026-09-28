@@ -4,10 +4,7 @@ import li.cil.oc.Settings
 import li.cil.oc.common.audio.synth.channel.Channel
 
 /** A base class of low-, band-, and high-pass filters. */
-abstract class SVFilter(initialCutoff: Float, channel: Channel) extends PerSampleFilter {
-  val Cutoff = new Filter.Cutoff(initialCutoff, channel)
-  val Resonance = new Filter.Resonance(channel)
-
+abstract class SVFilter(initialCutoff: Float, channel: Channel) extends ChannelFilter(initialCutoff, channel) {
   private var prevCutoff = -1f
   private var prevReso = -1f
 

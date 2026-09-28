@@ -1,14 +1,12 @@
 package li.cil.oc.common.datacomponents
 
-import com.mojang.datafixers.util.Pair
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import com.mojang.serialization.{Codec, MapCodec}
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.{ByteBufCodecs, StreamCodec}
-import net.minecraft.util.{ColorRGBA, ExtraCodecs}
+import net.minecraft.util.ColorRGBA
 import net.minecraft.world.phys.{AABB, Vec3}
 
-import java.nio.ByteBuffer
 import java.util.stream.IntStream
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -40,6 +38,10 @@ object ScalaCodec {
       pair._1.fieldOf("first").forGetter[(A, B)](_._1),
       pair._2.fieldOf("second").forGetter[(A, B)](_._2)
     ).apply(inst, (a, b) => a -> b))
+
+  trait Enumeration extends scala.Enumeration {
+    val CODEC: Codec[Value] = INT.xmap(apply, _.id)
+  }
 }
 
 object ScalaStreamCodec {
@@ -82,4 +84,8 @@ object ScalaStreamCodec {
       pair._2, _._2,
       (a: K, b: V) => a -> b
     )
+
+  trait Enumeration extends scala.Enumeration {
+    val STREAM_CODEC: StreamCodec[ByteBuf, Value] = INT.map(apply, _.id)
+  }
 }

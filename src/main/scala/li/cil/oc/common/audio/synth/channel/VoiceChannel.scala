@@ -10,7 +10,7 @@ class VoiceChannel(synth: Synth, id: ChannelId) extends Channel(synth, id) with 
   val sum: SumOperator = new SumOperator(this)
   val waveshaper: Waveshaper = new Waveshaper(Some(this))
 
-  object FeedbackLevel extends Parameter(0f, Some(this)) {
+  object FeedbackGain extends Parameter(0f, Some(this)) {
     override def low: Float = -1f
 
     override def high: Float = 1f
@@ -31,7 +31,7 @@ class VoiceChannel(synth: Synth, id: ChannelId) extends Channel(synth, id) with 
   override def reset(): Unit = {
     super.reset()
     waveshaper.reset()
-    FeedbackLevel.reset()
+    FeedbackGain.reset()
     MasterSendLevel.reset()
     feedback = 0f
   }
@@ -50,7 +50,7 @@ class VoiceChannel(synth: Synth, id: ChannelId) extends Channel(synth, id) with 
         out = filter.processSample(out)
       }
 
-      feedback = out * FeedbackLevel.update()
+      feedback = out * FeedbackGain.update()
       out *= 1 + am.output.get()
       output.put(out * outputGain)
     }

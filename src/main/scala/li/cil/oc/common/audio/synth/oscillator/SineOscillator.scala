@@ -4,7 +4,7 @@ import li.cil.oc.Settings
 import li.cil.oc.common.audio.synth.SampleBuffer
 import li.cil.oc.common.audio.synth.filter.Downsampler2x
 
-class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
+class SineOscillator(model: OscillatorModel, unipolar: Boolean) extends Oscillator(model) {
   // follower phase, in [0; 1).
   private var phase = 0f
 
@@ -74,6 +74,12 @@ class SineOscillator(model: OscillatorModel) extends Oscillator(model) {
     }
 
     // TODO: replace with linear interpolation of tabulated sine.
-    math.sin(2 * Math.PI * phase).toFloat
+    val out = math.sin(2 * Math.PI * phase).toFloat
+
+    if (unipolar) {
+      (1 + out) * 0.5f
+    } else {
+      out
+    }
   }
 }

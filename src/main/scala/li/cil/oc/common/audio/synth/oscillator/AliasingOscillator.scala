@@ -64,40 +64,57 @@ abstract class AliasingOscillator(model: OscillatorModel) extends Oscillator(mod
 }
 
 object AliasingOscillator {
+  private def adjustPolarity(bipolarSample: Float, makeUnipolar: Boolean): Float = {
+    if (makeUnipolar) {
+      (1 + bipolarSample) * 0.5f
+    } else {
+      bipolarSample
+    }
+  }
+
   /** An aliasing sine oscillator. Suitable for LFOs. */
-  class Sine(model: OscillatorModel) extends AliasingOscillator(model) {
-    override protected def computeSample(phase: Float): Float = math.sin(2 * Math.PI * phase).toFloat
+  class Sine(model: OscillatorModel, unipolar: Boolean) extends AliasingOscillator(model) {
+    override protected def computeSample(phase: Float): Float = {
+      adjustPolarity(math.sin(2 * Math.PI * phase).toFloat, unipolar)
+    }
   }
 
   /** An aliasing square oscillator. Suitable for LFOs. */
-  class Square(model: OscillatorModel) extends AliasingOscillator(model) {
+  class Square(model: OscillatorModel, unipolar: Boolean) extends AliasingOscillator(model) {
     override protected def computeSample(phase: Float): Float = {
       if (phase < 0.5f) {
         1f
       } else {
-        -1f
+        if (unipolar) 0f else -1f
       }
     }
   }
 
   /** An aliasing sawtooth oscillator. Suitable for LFOs. */
-  class Sawtooth(model: OscillatorModel) extends AliasingOscillator(model) {
-    override protected def computeSample(phase: Float): Float = 2 * phase - 1
-  }
-
-  /** An aliasing triangle oscillator. Suitable for LFOs. */
-  class Triangle(model: OscillatorModel) extends AliasingOscillator(model) {
+  class Sawtooth(model: OscillatorModel, unipolar: Boolean) extends AliasingOscillator(model) {
     override protected def computeSample(phase: Float): Float = {
-      if (phase < 0.5f) {
-        2 * phase
+      if (unipolar) {
+        phase
       } else {
-        2 - 2 * phase
+        2 * phase - 1
       }
     }
   }
 
+  /** An aliasing triangle oscillator. Suitable for LFOs. */
+  class Triangle(model: OscillatorModel, unipolar: Boolean) extends AliasingOscillator(model) {
+    override protected def computeSample(phase: Float): Float = adjustPolarity(
+      if (phase < 0.5f) {
+        2 * phase
+      } else {
+        2 - 2 * phase
+      },
+      unipolar,
+    )
+  }
+
   /** An aliasing sample-and-hold noise generator. */
-  class SampleAndHoldNoise(model: OscillatorModel) extends AliasingOscillator(model) {
+  class SampleAndHoldNoise(model: OscillatorModel, unipolar: Boolean) extends AliasingOscillator(model) {
     private val random = new Random
     private var value = 0f
 
@@ -111,6 +128,10 @@ object AliasingOscillator {
     override protected def onPhaseReset(): Unit = {
       super.onPhaseReset()
       value = random.nextFloat()
+
+      if (!unipolar) {
+        value = 2 * value - 1f
+      }
     }
   }
 
@@ -119,6 +140,7 @@ object AliasingOscillator {
     model: OscillatorModel,
     private val initial: Int,
     private val mask: Int,
+    unipolar: Boolean,
   ) extends AliasingOscillator(model) {
     private var state = initial
     private var value = 1f
@@ -136,7 +158,10 @@ object AliasingOscillator {
 
       val b = state & 1
       state = (state >>> 1) ^ b * mask
-      value = b * 2 - 1
+
+      if (!unipolar) {
+        value = b * 2 - 1
+      }
     }
   }
 }

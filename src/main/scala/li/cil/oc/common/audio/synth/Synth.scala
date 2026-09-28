@@ -31,15 +31,15 @@ class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
     }
   }
 
-  def channelById(id: ChannelId): Channel = id match {
+  def channelById(id: ChannelId): Option[Channel] = id match {
     case id: ChannelId.Voice => channelById(id)
-    case id @ ChannelId.Master => channelById(id)
+    case id @ ChannelId.Master => Some(channelById(id))
     case id: ChannelId.Lfo => channelById(id)
   }
 
-  def channelById(id: ChannelId.Voice): VoiceChannel = voiceChannels(id.idx)
+  def channelById(id: ChannelId.Voice): Option[VoiceChannel] = voiceChannels.lift(id.idx)
   def channelById(@unused id: ChannelId.Master.type): MasterChannel = masterChannel
-  def channelById(id: ChannelId.Lfo): LfoChannel = lfoChannels(id.idx)
+  def channelById(id: ChannelId.Lfo): Option[LfoChannel] = lfoChannels.lift(id.idx)
 
   @throws[IllegalArgumentException]("if adding causes a send cycle")
   def addChannelSend(sourceId: ChannelId, targetId: ChannelId, target: AnyRef): Unit = {
@@ -64,8 +64,8 @@ class Synth(voiceChannelCount: Int, lfoChannelCount: Int) extends Resettable {
   }
 
   def process(samples: Int, output: ByteBuffer): Unit = {
-    for (channelId <- graph.toposort) {
-      channelById(channelId).process(samples)
+    for (channelId <- graph.toposort; channel <- channelById(channelId)) {
+      channel.process(samples)
     }
 
     val wrIdx = masterChannel.output.wrIdx

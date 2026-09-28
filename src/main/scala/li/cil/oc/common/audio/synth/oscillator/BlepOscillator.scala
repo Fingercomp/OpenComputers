@@ -2,7 +2,7 @@ package li.cil.oc.common.audio.synth.oscillator
 
 import li.cil.oc.Settings
 
-abstract class BlepOscillator(model: OscillatorModel) extends Oscillator(model) {
+abstract class BlepOscillator(model: OscillatorModel, unipolar: Boolean) extends Oscillator(model) {
   // follower phase, in [0; 1).
   protected var phase = 0f
 
@@ -132,7 +132,11 @@ abstract class BlepOscillator(model: OscillatorModel) extends Oscillator(model) 
       delayedOut += computeAliasedSample()
     }
 
-    out * 2 - 1
+    if (unipolar) {
+      out
+    } else {
+      out * 2 - 1
+    }
   }
 
   protected def processFollowerDiscontinuities(deltaPhase: Float): Float
@@ -153,7 +157,7 @@ object BlepOscillator {
   def blamp0(t: Float): Float = t * t * t * sixth
   def blamp1(t: Float): Float = -blamp0(1 - t)
 
-  class Square(model: OscillatorModel) extends BlepOscillator(model) {
+  class Square(model: OscillatorModel, unipolar: Boolean) extends BlepOscillator(model, unipolar) {
     // 0 -> high, 1 -> low
     private var stage: Byte = 0
 
@@ -198,7 +202,7 @@ object BlepOscillator {
     override protected def computeAliasedSample(): Float = 1f - stage.toFloat
   }
 
-  class Sawtooth(model: OscillatorModel) extends BlepOscillator(model) {
+  class Sawtooth(model: OscillatorModel, unipolar: Boolean) extends BlepOscillator(model, unipolar) {
     override def processFollowerDiscontinuities(deltaPhase: Float): Float = {
       var out = 0f
 
@@ -215,7 +219,7 @@ object BlepOscillator {
     override protected def computeAliasedSample(): Float = phase
   }
 
-  class Triangle(model: OscillatorModel) extends BlepOscillator(model) {
+  class Triangle(model: OscillatorModel, unipolar: Boolean) extends BlepOscillator(model, unipolar) {
     private var stage: Byte = 0
 
     override protected def resetFollower(): Unit = {

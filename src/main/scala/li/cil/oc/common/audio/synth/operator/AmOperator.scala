@@ -22,10 +22,10 @@ class AmOperator(channel: Channel) extends Operator {
   override def boundChannel: Channel = channel
 
   def addInput(channelId: ChannelId): Modulation = {
-    val params = new Modulation
-    super.addInput(channelId, params)
+    val modulation = new Modulation
+    super.addInput(channelId, modulation)
 
-    params
+    modulation
   }
 
   override def removeInput(channelId: ChannelId): Unit = {
@@ -38,8 +38,8 @@ class AmOperator(channel: Channel) extends Operator {
     for (i <- 0 until samples) {
       var out = 0f
 
-      for ((channelId, input) <- inputChannels) {
-        out += channel.synth.channelById(channelId).output.getAt(i) * input.ModIndex.update()
+      for ((channelId, input) <- inputChannels; inputChannel <- channel.synth.channelById(channelId)) {
+        out += inputChannel.output.getAt(i) * input.ModIndex.update()
       }
 
       output.put(out)

@@ -40,10 +40,10 @@ object ModulationSource {
     high: Float,
   ) extends ModulationSource with Triggerable {
     private val envelope = new AdsrEnvelope(None)
-    envelope.Attack.source = Constant(attack)
-    envelope.Decay.source = Constant(decay)
-    envelope.Sustain.source = Constant(sustain)
-    envelope.Release.source = Constant(release)
+    envelope.Attack.setConstant(attack)
+    envelope.Decay.setConstant(decay)
+    envelope.Sustain.setConstant(sustain)
+    envelope.Release.setConstant(release)
 
     override def onOpen(): Unit = {
       super.onOpen()
@@ -90,7 +90,7 @@ object ModulationSource {
   class Channel(modChannel: synth.channel.Channel) extends ModulationSource {
     private var pos = modChannel.output.rdIdx
 
-    override def value: Float = modChannel.output.getAbsolute(pos)
+    override def value: Float = (modChannel.output.getAbsolute(pos) + 1) * 0.5f min 1f max 0f
 
     override def update(): Float = {
       val prev = value
