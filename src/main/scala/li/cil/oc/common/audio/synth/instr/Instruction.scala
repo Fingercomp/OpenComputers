@@ -189,7 +189,7 @@ object Instruction {
     override def opcode: Opcode.Value = Opcode.Delay
 
     override def execute(interp: Interpreter): Unit = {
-      interp.run(duration)
+      interp.delay(duration)
     }
   }
 
